@@ -7,10 +7,14 @@ const axios = require('axios');
 const app = express(); // initialize your express app instance
 const weatherData = require('./data/weather.json');
 const Forecast = require('./models/Forecast');
+const Movie = require('./models/Movie');
 const PORT = process.env.PORT;
 
-const WeatherBit_Key = process.env.WEATHERBIT_KEY;
-const WeatherBit_Url = process.env.WEATHERBIT_URL;
+const weatherBit_Key = process.env.WEATHERBIT_KEY;
+const weatherBit_Url = process.env.WEATHERBIT_URL;
+const movieDB_Url = process.env.MOVIEDB_URL;
+const movieDB_Key = process.env.MOVIEDB_API_KEY;
+
 app.use(cors());
 app.use(express.json());
 
@@ -49,7 +53,7 @@ app.get('/weather', (req, res) => {
   }
 });
 
-//--------------------------------------------------------//
+//-----------------------Weather---------------------------------//
 
 
 
@@ -57,18 +61,43 @@ app.get('/weather-bit',async (req,res) =>{
   const {latitude,longitude} = req.query;
   const queryParams={
     params:{
-      key:WeatherBit_Key,
+      key:weatherBit_Key,
       lat:latitude,
       lon:longitude,
     }
   };
 
-  const response = await axios.get(WeatherBit_Url,queryParams);
+  const response = await axios.get(weatherBit_Url,queryParams);
   const WeatherBitData = response.data.data.map(item => new Forecast(item));
   res.json(WeatherBitData);
 
 });
 
+//-------------------Moive-------------------------------------//
+
+
+let myMemory = {};
+app.get('/movie', async (req,res) =>{
+  let searchQuery = req.query.searchQuery;
+  if (myMemory[searchQuery] !== undefined) {
+
+    res.send(myMemory[searchQuery]);
+  } else {
+
+    const url =`${movieDB_Url}?api_key=${movieDB_Key}&query=${searchQuery}`;
+    const gettingMovie =await axios.get(url);
+    console.log(gettingMovie);
+
+    const moviesArray=gettingMovie.data.results.map(item=>new Movie(item));
+    console.log(gettingMovie.data.results);
+    res.json(moviesArray);
+  }
+
+});
+
+
 app.listen(PORT, () => {
   console.log(PORT);
 });
+
+
