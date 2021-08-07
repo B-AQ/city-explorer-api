@@ -19,35 +19,27 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/weather', (req, res) => {
-  const lon = req.query.lon;
-  const lat = req.query.lat;
   const searchQuery = req.query.searchQuery;
 
-  // console.log(lat);
-  // console.log(searchQuery);
-
   try {
-    let cityNewArray = weatherData.find((element) => {
-      if (element.city_name === searchQuery) {
-        return element.city_name;
-      }
+    let cityNewArray = weatherData.find(
+      (element) => element.city_name.toLowerCase() === searchQuery.toLowerCase()
+    );
 
-    });
     class Forecast {
       constructor(datetime, description) {
         this.date = datetime;
         this.description = description;
       }
     }
-    console.log(cityNewArray);
-    // res.status(200).send(cityNewArray);
-    let weatherCity =cityNewArray.data.map(element=>{
-      return new Forecast({datetime:element.datetime, description:`Low of ${element.low_temp}, high of ${element.high_temp} with ${element.weather.description}`});
-
+    let weatherCity = cityNewArray.data.map((item) => {
+      return new Forecast({
+        datetime: item.datetime,
+        description: `Low of ${item.low_temp}, high of ${item.high_temp} with ${item.weather.description}`,
+      });
     });
 
     res.send(weatherCity);
-
   } catch (e) {
     res.status(404).send('Page is not found 404');
   }
@@ -55,49 +47,41 @@ app.get('/weather', (req, res) => {
 
 //-----------------------Weather---------------------------------//
 
-
-
-app.get('/weather-bit',async (req,res) =>{
-  const {latitude,longitude} = req.query;
-  const queryParams={
-    params:{
-      key:weatherBit_Key,
-      lat:latitude,
-      lon:longitude,
-    }
+app.get('/weather-bit', async (req, res) => {
+  const { latitude, longitude } = req.query;
+  const queryParams = {
+    params: {
+      key: weatherBit_Key,
+      lat: latitude,
+      lon: longitude,
+    },
   };
 
-  const response = await axios.get(weatherBit_Url,queryParams);
-  const WeatherBitData = response.data.data.map(item => new Forecast(item));
+  const response = await axios.get(weatherBit_Url, queryParams);
+  const WeatherBitData = response.data.data.map((item) => new Forecast(item));
   res.json(WeatherBitData);
-
 });
 
 //-------------------Moive-------------------------------------//
 
-
-let myMemory = {};
-app.get('/movie', async (req,res) =>{
+let myMemory = [];
+app.get('/movie', async (req, res) => {
   let searchQuery = req.query.searchQuery;
   if (myMemory[searchQuery] !== undefined) {
-
     res.send(myMemory[searchQuery]);
   } else {
-
-    const url =`${movieDB_Url}?api_key=${movieDB_Key}&query=${searchQuery}`;
-    const gettingMovie =await axios.get(url);
+    const url = `${movieDB_Url}?api_key=${movieDB_Key}&query=${searchQuery}`;
+    const gettingMovie = await axios.get(url);
     console.log(gettingMovie);
 
-    const moviesArray=gettingMovie.data.results.map(item=>new Movie(item));
+    const moviesArray = gettingMovie.data.results.map(
+      (item) => new Movie(item)
+    );
     console.log(gettingMovie.data.results);
     res.json(moviesArray);
   }
-
 });
-
 
 app.listen(PORT, () => {
   console.log(PORT);
 });
-
-
